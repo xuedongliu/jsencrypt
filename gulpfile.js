@@ -94,7 +94,7 @@ gulp.task('prepare_test', function() {
 });
 
 gulp.task('compress', function (cb) {
-  return gulp.src('bin/jsencrypt.js')
+  return gulp.src('bin/jsencrypt.js', {allowEmpty: true})
     .pipe(uglify())
     .pipe(rename('jsencrypt.min.js'))
     .pipe(gulp.dest('bin'));

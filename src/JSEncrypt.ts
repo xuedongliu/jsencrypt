@@ -87,6 +87,14 @@ export default class JSEncrypt {
         }
     }
 
+    /**
+     * Proxy method for RSAKey object's decrypt, decrypt the long string using the private
+     * components of the rsa key object. Note that if the object was not set will be created
+     * on the fly (by the getKey method) using the parameters passed in the JSEncrypt constructor
+     * @param {string} str base64 encoded crypted string to decrypt
+     * @return {string} the decrypted string
+     * @public
+     */
     public decryptLong(str:string) {
         const k = this.getKey();
         // @ts-ignore
