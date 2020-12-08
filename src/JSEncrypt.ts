@@ -87,6 +87,26 @@ export default class JSEncrypt {
         }
     }
 
+    public decryptLong(str:string) {
+        const k = this.getKey();
+        // @ts-ignore
+        const maxLength = ((k.n.bitLength() + 7) >> 3) - 11;
+        try {
+            let ct = "";
+            const $string = b64tohex(str);
+            if ($string.length > maxLength) {
+                const lt = $string.match(/.{1,256}/g);
+                lt.forEach((entry) => {
+                    ct += k.decrypt(entry);
+                });
+                return ct;
+            }
+            return k.decrypt(b64tohex($string));
+        } catch (ex) {
+            return ex;
+        }
+    }
+
     /**
      * Proxy method for RSAKey object's encrypt, encrypt the string using the public
      * components of the rsa key object. Note that if the object was not set will be created
@@ -104,6 +124,60 @@ export default class JSEncrypt {
         }
     }
 
+    public encryptLong(str:string) {
+        const k = this.getKey();
+        try {
+            let ct = "";
+            const bytes = [0];
+            let byteNo = 0;
+            let c;
+            const len = str.length;
+            let temp = 0;
+            for (let i = 0; i < len; i++) {
+                c = str.charCodeAt(i);
+                if (c >= 0x010000 && c <= 0x10ffff) {
+                    byteNo += 4;
+                } else if (c >= 0x000800 && c <= 0x00ffff) {
+                    byteNo += 3;
+                } else if (c >= 0x000080 && c <= 0x0007ff) {
+                    // 特殊字符，如È，Ò
+                    byteNo += 2;
+                } else {
+                    // 英文以及标点符号
+                    byteNo += 1;
+                }
+                if (byteNo % 117 >= 114 || byteNo % 117 === 0) {
+                    if (byteNo - temp >= 114) {
+                        bytes.push(i);
+                        temp = byteNo;
+                    }
+                }
+            }
+            if (bytes.length > 1) {
+                for (let i = 0; i < bytes.length - 1; i++) {
+                    let s;
+                    if (i === 0) {
+                        s = str.substring(0, bytes[i + 1] + 1);
+                    } else {
+                        s = str.substring(bytes[i] + 1, bytes[i + 1] + 1);
+                    }
+                    const t1 = k.encrypt(s);
+                    ct += t1;
+                }
+                if (bytes[bytes.length - 1] !== str.length - 1) {
+                    const lastStr = str.substring(bytes[bytes.length - 1] + 1);
+                    ct += k.encrypt(lastStr);
+                }
+                return hex2b64(ct);
+            }
+            const t = k.encrypt(str);
+            const y = hex2b64(t as string);
+            return y;
+        } catch (ex) {
+            console.error(ex);
+        }
+    }
+
     /**
      * Proxy method for RSAKey object's sign.
      * @param {string} str the string to sign
@@ -112,7 +186,7 @@ export default class JSEncrypt {
      * @return {string} the signature encoded in base64
      * @public
      */
-    public sign(str:string, digestMethod:(str:string) => string, digestName:string):string|false {
+    public sign(str:string, digestMethod:(str:string) => string, digestName:string):string | false {
         // return the RSA signature of 'str' in 'hex' format.
         try {
             return hex2b64(this.getKey().sign(str, digestMethod, digestName));

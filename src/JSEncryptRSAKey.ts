@@ -252,6 +252,10 @@ export class JSEncryptRSAKey extends RSAKey {
         return key;
     }
 
+    public getNoWrapPrivateKey() {
+        return JSEncryptRSAKey.wordwrap(this.getPrivateBaseKeyB64());
+    }
+
     /**
      * Retrieve the pem encoded public key
      * @returns {string} the pem encoded public key with header/footer
@@ -262,6 +266,10 @@ export class JSEncryptRSAKey extends RSAKey {
         key += JSEncryptRSAKey.wordwrap(this.getPublicBaseKeyB64()) + "\n";
         key += "-----END PUBLIC KEY-----";
         return key;
+    }
+
+    public getNoWrapPublicKey() {
+        return JSEncryptRSAKey.wordwrap(this.getPublicBaseKeyB64());
     }
 
     /**
